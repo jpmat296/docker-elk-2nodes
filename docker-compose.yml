@@ -27,6 +27,7 @@ services:
       - elasticsearch
 
   elasticsearch:
+    hostname: elasticsearch
     build:
       context: elasticsearch/
       args:
@@ -43,9 +44,29 @@ services:
       # Used to initialize the keystore during the initial startup of
       # Elasticsearch. Ignored on subsequent runs.
       ELASTIC_PASSWORD: ${ELASTIC_PASSWORD:-}
-      # Use single node discovery in order to disable production mode and avoid bootstrap checks.
-      # see: https://www.elastic.co/guide/en/elasticsearch/reference/7.17/bootstrap-checks.html
-      discovery.type: single-node
+      node.max_local_storage_nodes: '3'
+    networks:
+      - elk
+
+  elasticsearch2:
+    hostname: elasticsearch2
+    build:
+      context: elasticsearch/
+      args:
+        ELASTIC_VERSION: ${ELASTIC_VERSION}
+    volumes:
+      - ./elasticsearch/config/elasticsearch2.yml:/usr/share/elasticsearch/config/elasticsearch.yml:ro,z
+      - elasticsearch2:/usr/share/elasticsearch/data:z
+    ports:
+      - "9201:9200"
+      - "9301:9300"
+    environment:
+      ES_JAVA_OPTS: -Xms512m -Xmx512m
+      # Bootstrap password.
+      # Used to initialize the keystore during the initial startup of
+      # Elasticsearch. Ignored on subsequent runs.
+      ELASTIC_PASSWORD: ${ELASTIC_PASSWORD:-}
+      node.max_local_storage_nodes: '3'
     networks:
       - elk
 
@@ -93,3 +114,4 @@ networks:
 volumes:
   setup:
   elasticsearch:
+  elasticsearch2:
